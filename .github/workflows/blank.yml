@@ -1,0 +1,52 @@
+name: Locust Performance Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: # For manually triggering the workflow
+
+jobs:
+  run-locust:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install locust
+
+      - name: Run Locust Load Test
+        env:
+          TARGET_URL: ${{ secrets.TARGET_URL }} # URL from environment variable
+          TEST_DURATION: ${{ secrets.TEST_DURATION }} # Duration of test (e.g., 10m for 10 minutes)
+          USERS: ${{ secrets.USERS }} # Number of concurrent users
+
+        run: |
+          mkdir -p locust-reports 
+          locust -f locustfile.py \
+          --host $TARGET_URL \
+          --users $USERS \
+          --run-time $TEST_DURATION \
+          --headless \
+          --logfile locust_log.log \
+          --csv=locust-reports/locust_report \
+          --html=locust-reports/locust_report.html
+
+      - name: Upload Locust Logs and Reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: locust_reports
+          path: locust-reports/
