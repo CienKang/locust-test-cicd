@@ -1,13 +1,16 @@
 name: Locust Performance Test
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch: # For manually triggering the workflow
+  workflow_dispatch: # Only manual triggering of the workflow
+    inputs:
+      TEST_DURATION:
+        description: "Duration of test (e.g., 10m for 10 minutes)"
+        required: true
+        default: "10m" # Default duration
+      USERS:
+        description: "Number of concurrent users"
+        required: true
+        default: "10" # Default number of users
 
 jobs:
   run-locust:
@@ -29,9 +32,9 @@ jobs:
 
       - name: Run Locust Load Test
         env:
-          TARGET_URL: ${{ secrets.TARGET_URL }} # URL from environment variable
-          TEST_DURATION: ${{ secrets.TEST_DURATION }} # Duration of test (e.g., 10m for 10 minutes)
-          USERS: ${{ secrets.USERS }} # Number of concurrent users
+          TARGET_URL: ${{ secrets.TARGET_URL }}
+          TEST_DURATION: ${{ github.event.inputs.TEST_DURATION }} # Duration of test input from user
+          USERS: ${{ github.event.inputs.USERS }} # Number of concurrent users input from user
 
         run: |
           mkdir -p locust-reports 
